@@ -31,7 +31,6 @@ public class SampleController {
         log.info("{} | before Async", Thread.currentThread().getName());
         CompletableFuture<Integer> future = asyncService.completableFutureAsync();
         log.info("{} | after Async", Thread.currentThread().getName());
-        log.info("{} | future.get() | {}", Thread.currentThread().getName(), future.get());
         return future.get();
     }
 
