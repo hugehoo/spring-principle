@@ -1,6 +1,5 @@
 package com.spring.principle.examples.async;
 
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,15 +22,14 @@ public class SampleController {
         log.info("{} | before void", Thread.currentThread().getName());
         asyncService.voidSync();
         log.info("{} | after void", Thread.currentThread().getName());
-        return;
     }
 
     @GetMapping("return-async-future")
-    public Object returnFuture() throws InterruptedException, ExecutionException {
-        log.info("{} | before Async", Thread.currentThread().getName());
-        CompletableFuture<Integer> future = asyncService.completableFutureAsync();
-        log.info("{} | after Async", Thread.currentThread().getName());
-        return future.get();
+    public void returnCompletableFuture() throws InterruptedException, ExecutionException {
+        log.info("before Async");
+        asyncService.completableFutureAsync()
+            .thenAccept(result -> log.info("Return of Async | {}", result));
+        log.info("after Async");
     }
 
     @GetMapping("return-async-void")
@@ -39,7 +37,6 @@ public class SampleController {
         log.info("{} | before Async", Thread.currentThread().getName());
         asyncService.voidAsync();
         log.info("{} | after Async", Thread.currentThread().getName());
-        return;
     }
 
 }

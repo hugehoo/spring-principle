@@ -27,9 +27,7 @@ public class AsyncService {
 
     @Async
     public CompletableFuture<Integer> completableFutureAsync() throws InterruptedException {
-        log.info("{} | completableFutureAsync()", Thread.currentThread().getName());
-        Thread.sleep(500);
-        log.info("{} | End of Sleep", Thread.currentThread().getName());
+        log.info("middle of completableFutureAsync()");
         return new AsyncResult<>(1).completable();
     }
 }
