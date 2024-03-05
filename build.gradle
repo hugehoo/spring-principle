@@ -2,6 +2,8 @@ plugins {
     id 'java'
     id 'org.springframework.boot' version '3.2.0'
     id 'io.spring.dependency-management' version '1.1.4'
+    id 'org.jetbrains.kotlin.jvm' version '1.8.0'
+    id "com.github.davidmc24.gradle.plugin.avro" version "1.9.1"
 }
 
 group = 'com.spring'
@@ -19,6 +21,10 @@ configurations {
 
 repositories {
     mavenCentral()
+    gradlePluginPortal()
+    maven {
+        url "https://packages.confluent.io/maven"
+    }
 }
 
 dependencies {
@@ -30,11 +36,38 @@ dependencies {
     testRuntimeOnly 'org.junit.jupiter:junit-jupiter-engine'
     testImplementation 'org.junit.jupiter:junit-jupiter-api'
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk8"
+
+    // kafka
+    implementation 'org.apache.kafka:kafka-clients:3.4.0'
+    implementation 'org.apache.avro:avro:1.7.6'
+    implementation 'io.confluent:kafka-avro-serializer:6.1.0'
 }
 
 test {
     useJUnitPlatform()
 }
+compileKotlin {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+compileTestKotlin {
+    kotlinOptions {
+        jvmTarget = "17"
+    }
+}
+generateAvroJava {
+    source("src/main/resources/avro/")
+    include("**/*.avsc")
+    outputDir = file("build/generated/avro-java")
+}
+
+avro {
+    fieldVisibility = "PRIVATE"
+    outputCharacterEncoding = "UTF-8"
+}
+
 
 //tasks.named('test') {
 //    useJUnitPlatform()
