@@ -1,12 +1,9 @@
 package com.spring.principle.examples.consumer
 
 import com.spring.principle.examples.consumer.Constants.*
-import org.apache.kafka.clients.consumer.ConsumerConfig
-import org.apache.kafka.clients.consumer.ConsumerRecord
-import org.apache.kafka.clients.consumer.ConsumerRecords
-import org.apache.kafka.clients.consumer.KafkaConsumer
-import org.apache.kafka.clients.consumer.OffsetAndMetadata
-import org.apache.kafka.clients.consumer.OffsetCommitCallback
+import io.confluent.kafka.serializers.KafkaAvroDeserializer
+import org.apache.avro.generic.GenericRecord
+import org.apache.kafka.clients.consumer.*
 import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.Logger
@@ -24,15 +21,16 @@ class AvroConsumer {
         configs[ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG] = BOOTSTRAP_SERVERS
         configs[ConsumerConfig.GROUP_ID_CONFIG] = GROUP_ID
         configs[ConsumerConfig.KEY_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java.name
-        configs[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = StringDeserializer::class.java.name
+        configs[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = KafkaAvroDeserializer::class.java.name
         configs[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = true
+        configs["schema.registry.url"] = SCHEMA_REGISTRY_URL
 
-        val consumer = KafkaConsumer<String, String>(configs)
-        consumer.subscribe(Collections.singletonList(TOPIC_TEST))
+        val consumer = KafkaConsumer<String, GenericRecord>(configs)
+        consumer.subscribe(Collections.singletonList(TOPIC_AVRO))
 
         while (true) {
-            val records: ConsumerRecords<String, String> = consumer.poll(Duration.ofSeconds(1))
-            for (record: ConsumerRecord<String, String> in records) {
+            val records: ConsumerRecords<String, GenericRecord> = consumer.poll(Duration.ofSeconds(1))
+            for (record: ConsumerRecord<String, GenericRecord> in records) {
                 logger.info("{} | {} | record | {} | \n", record.partition(), record.timestamp(), record.value())
             }
 
