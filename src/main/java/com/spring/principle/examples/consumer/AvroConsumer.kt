@@ -31,7 +31,12 @@ class AvroConsumer {
         while (true) {
             val records: ConsumerRecords<String, GenericRecord> = consumer.poll(Duration.ofSeconds(1))
             for (record: ConsumerRecord<String, GenericRecord> in records) {
-                logger.info("{} | {} | record | {} | \n", record.partition(), record.timestamp(), record.value())
+                val recordValue = record.value()
+                val name = recordValue["name"]
+                val favoriteNumber = recordValue["favorite_number"]
+                val favoriteColor = recordValue["favorite_color"]
+                logger.info("name | {} | number | {} | color | {}", name, favoriteNumber, favoriteColor)
+                logger.info("{} | {} | record | {} | \n", record.partition(), record.timestamp(), recordValue)
             }
 
             // background 에서 OffsetCommitCallback() 진행

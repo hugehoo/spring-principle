@@ -16,10 +16,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class PrincipleApplication {
 	public static void main(String[] args) {
-		// var consumer = new AvroConsumer();
-		// consumer.consume();
-		AvroJavaConsumer avroJavaConsumer = new AvroJavaConsumer();
-		avroJavaConsumer.consumerAvro();
+		var consumer = new AvroConsumer();
+		consumer.consume();
+		// AvroJavaConsumer avroJavaConsumer = new AvroJavaConsumer();
+		// avroJavaConsumer.consumerAvro();
 
 		SpringApplication.run(PrincipleApplication.class, args);
 	}
