@@ -1,10 +1,11 @@
 package com.spring.principle.examples.consumer
 
+import com.example.Customer
 import com.spring.principle.examples.consumer.Constants.*
 import io.confluent.kafka.serializers.KafkaAvroDeserializer
-import org.apache.avro.generic.GenericRecord
+import io.confluent.kafka.serializers.KafkaAvroDeserializerConfig
+import io.confluent.kafka.serializers.KafkaAvroSerializerConfig
 import org.apache.kafka.clients.consumer.*
-import org.apache.kafka.common.TopicPartition
 import org.apache.kafka.common.serialization.StringDeserializer
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -24,32 +25,17 @@ class AvroConsumer {
         configs[ConsumerConfig.VALUE_DESERIALIZER_CLASS_CONFIG] = KafkaAvroDeserializer::class.java.name
         configs[ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG] = true
         configs["schema.registry.url"] = SCHEMA_REGISTRY_URL
+        configs[KafkaAvroDeserializerConfig.SPECIFIC_AVRO_READER_CONFIG] = true
 
-        val consumer = KafkaConsumer<String, GenericRecord>(configs)
+        val consumer = KafkaConsumer<String, Customer>(configs)
         consumer.subscribe(Collections.singletonList(TOPIC_AVRO))
-
         while (true) {
-            val records: ConsumerRecords<String, GenericRecord> = consumer.poll(Duration.ofSeconds(1))
-            for (record: ConsumerRecord<String, GenericRecord> in records) {
-                val recordValue = record.value()
-                val name = recordValue["name"]
-                val favoriteNumber = recordValue["favorite_number"]
-                val favoriteColor = recordValue["favorite_color"]
+            for (record: ConsumerRecord<String, Customer> in consumer.poll(Duration.ofSeconds(1))) {
+                val name = record.value().name
+                val favoriteColor = record.value().favoriteColor
+                val favoriteNumber = record.value().favoriteNumber
                 logger.info("name | {} | number | {} | color | {}", name, favoriteNumber, favoriteColor)
-                logger.info("{} | {} | record | {} | \n", record.partition(), record.timestamp(), recordValue)
             }
-
-            // background 에서 OffsetCommitCallback() 진행
-            consumer.commitAsync(OffsetCommitCallback { offsets: Map<TopicPartition, OffsetAndMetadata>, e: Exception? ->
-                if (e != null) {
-                    System.err.println("Commit Failed \n")
-                } else {
-                    System.out.printf("Commit Succeeded $offsets \n")
-                }
-                if (e != null) {
-                    logger.error("Commit failed for offsets {} \n", offsets, e)
-                }
-            })
         }
     }
 }
