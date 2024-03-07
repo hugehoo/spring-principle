@@ -31,10 +31,7 @@ class AvroConsumer {
         consumer.subscribe(Collections.singletonList(TOPIC_AVRO))
         while (true) {
             for (record: ConsumerRecord<String, Customer> in consumer.poll(Duration.ofSeconds(1))) {
-                val name = record.value().name
-                val favoriteColor = record.value().favoriteColor
-                val favoriteNumber = record.value().favoriteNumber
-                logger.info("name | {} | number | {} | color | {}", name, favoriteNumber, favoriteColor)
+                logger.info("value | {}", record.value())
             }
         }
     }

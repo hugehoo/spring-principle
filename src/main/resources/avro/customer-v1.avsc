@@ -12,7 +12,8 @@
       "type": [
         "int",
         "null"
-      ]
+      ],
+      "default": 21
     },
     {
       "name": "favorite_color",
