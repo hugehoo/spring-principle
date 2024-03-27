@@ -1,22 +1,6 @@
-package com.spring.principle;
+![img.png](img.png)
 
-import java.io.IOException;
-
-import org.springframework.boot.web.embedded.tomcat.TomcatServletWebServerFactory;
-import org.springframework.boot.web.server.WebServer;
-import org.springframework.boot.web.servlet.server.ServletWebServerFactory;
-import org.springframework.context.support.GenericApplicationContext;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-
-import com.spring.principle.examples.boot.section2.HelloController;
-
-import jakarta.servlet.ServletException;
-import jakarta.servlet.http.HttpServlet;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-
+``` java
 public class PrincipleApplication {
     public static void main(String[] args) {
         // spring container 를 만들어 보자.
@@ -48,3 +32,25 @@ public class PrincipleApplication {
         webServer.start(); // tomcat servlet container 가 실행된다.
     }
 }
+```
+- 굳이 spring container 를 통해 HelloController 를 만들어야 하는 이유가 뭘까? 이전 처럼 new 연산자로 HelloController 오브젝트를 생성하면 되는 것 아닐까?
+- 이점 : spring container 는 어떤 타입의 오브젝트를 만들 때 딱 한번만 만든다.
+- Servlet Container 외에 다른 곳에서도 HelloController 를 사용하고 싶을 때, Spring Container 는 최초 한번 만들어둔 HelloContainer 를 그대로 반환한다.
+- 즉 HelloController 를 필요하는 모든 곳에서는 결국 동일한 object 를 가져다 쓰는 격이다.
+- 스프링 컨테이너는 싱글톤 패턴을 사용하지 않고도 객체를 딱 한번만 만들어 재사용할 수 있게 한다. 그래서 스프링 컨테이너를 싱글톤 레지스트리 라고도 부른다.
+ 
+### Dependency Injection
+- HelloController -> SimpleHelloService : HelloController 가 SimpleHelloService 를 의존한다.
+- 이말이 무슨 말이냐, SimpleHelloService 가 변경되면 HellocController 는 영향을 받는다. 이걸 의존관계가 있다고 표현한다.
+
+![img_1.png](img_1.png)
+- 코드상으로 보면 HelloController 는 HelloService Interface 에 의존하는 것 처럼 보인다.
+- 런타임에는 실제로 HelloController 가 의존할 구현 클래스(SimpleHelloService or ComplexHelloService)를 지정해줘야 한다.
+- 내가 어느 클래스의 오브젝트를 사용할 것인지 정해져야 한다.
+- HelloController 와 SimpleHelloService 의 연관관계를 만드는 것, 이 작업을 `Dependency Injection` 이라 부른다.
+- `Dependency Injection` 에는 `Assembler` 라는 제 3의 존재가 필요하다.
+- HelloController 가 사용할 Service 를 new 연산자로 내부에서 직접 생성하는 것이 아닌 외부에서 주입하도록 도와주는 역할을 Assembler 가 맡는다.
+- 이 Assembler 를 우리는 `Spring Container` 라 부른다.
+![img_2.png](img_2.png)
+- 주입을 해준다 -> SimpleHelloService 의 reference 를 넘겨준다 라는 의미.
+- 인터페이스를 통해 간접적으로 의존관계를 맺고 코드상의 명시적인 의존관계는 지운다.
