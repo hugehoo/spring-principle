@@ -54,3 +54,84 @@ public class PrincipleApplication {
 ![img_2.png](img_2.png)
 - 주입을 해준다 -> SimpleHelloService 의 reference 를 넘겨준다 라는 의미.
 - 인터페이스를 통해 간접적으로 의존관계를 맺고 코드상의 명시적인 의존관계는 지운다.
+
+```java
+public class PrincipleApplication {
+    public static void main(String[] args) {
+        GenericApplicationContext applicationContext = new GenericApplicationContext();
+        applicationContext.registerBean(HelloController.class);
+        applicationContext.registerBean(SimpleHelloService.class); // HelloService 를 구현한 빈을 등록한다.
+
+        applicationContext.refresh();
+        ...
+    }
+}
+```
+
+- 두개의 오브젝트가 빈으로 등록되는데 둘 사이의 관계는 어떻게 맺어지는 걸까?
+- 바로 스프링컨테이너가 이를 도와준다. HelloController 생성자는 HelloService 인터페이스를 필요로 하기 때문에 해당 인터페이스를 구현한 클래스가 런타임때 필요하다.
+- 스프링 컨테이너는 HelloController 를 생성할 때 필요한 HelloService 타입의 구체 클래스로 등록된 빈을 찾아 이를 (생성자에) 주입해준다.
+
+### DispatcherServlet
+- 매핑과 바인딩 역할을 한다. (위에서 FrontController 가 하던 역할)
+- FrontController 에서 매번 일일이 매핑과 바인딩 작업을 처리하지 않고 DispatcherServlet 에게 위임한다.
+- DispatcherServlet 을 생성하고 스프링 컨테이너에 등록된 빈 정보를 넘기도록 applicationContext 를 인자로 넣는다.
+
+````java
+public class PrincipleApplication {
+    public static void main(String[] args) {
+        GenericWebApplicationContext applicationContext = new GenericWebApplicationContext();
+        applicationContext.registerBean(HelloController.class);
+        applicationContext.registerBean(SimpleHelloService.class); // HelloService 를 구현한 빈을 등록한다.
+        applicationContext.refresh();
+
+        ServletWebServerFactory tomcatServletWebServerFactory = new TomcatServletWebServerFactory();
+        WebServer webServer = tomcatServletWebServerFactory.getWebServer(servletContext -> {
+            servletContext.addServlet("dispatcherServlet",
+                new DispatcherServlet(applicationContext))
+                .addMapping("/*");
+        });
+        webServer.start(); // tomcat servlet container 가 실행된다.
+    }
+}
+````
+
+````java
+
+@RequestMapping
+public class HelloController {
+
+    private final HelloService helloService;
+
+    public HelloController(HelloService helloService) {
+        this.helloService = helloService;
+    }
+
+    @GetMapping("/hello")
+    public String hello(String name) {
+        return helloService.sayHello(name);
+    }
+}
+````
+- DispatcherServlet 이 매핑 정보를 만들 때 @RequestMapping 이 붙은 클래스를 통해 web 요청을 처리할 수 있는 메서드를 찾는다. 
+```java
+public class PrincipleApplication {
+    public static void main(String[] args) {
+        GenericWebApplicationContext applicationContext = new GenericWebApplicationContext();
+        applicationContext.registerBean(HelloController.class);
+        applicationContext.registerBean(SimpleHelloService.class);
+        applicationContext.refresh();
+
+        // ServletContainer 를 코드롤 등록하면서 servlet 을 실행한다.
+        ServletWebServerFactory tomcatServletWebServerFactory = new TomcatServletWebServerFactory();
+        WebServer webServer = tomcatServletWebServerFactory.getWebServer(servletContext -> {
+            servletContext.addServlet("dispatcherServlet",
+                new DispatcherServlet(applicationContext))
+                .addMapping("/*");
+        });
+        webServer.start();
+    }
+}
+```
+- 전체적으로 코드가 간결해졌다.
+- (1) 스프링 컨테이너 생성과 스프링 빈을 등록, (2) ServletContainer 를 등록하고 servlet 을 실행한다.  
