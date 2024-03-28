@@ -117,12 +117,13 @@ public class HelloController {
 ```java
 public class PrincipleApplication {
     public static void main(String[] args) {
+        // (1)
         GenericWebApplicationContext applicationContext = new GenericWebApplicationContext();
         applicationContext.registerBean(HelloController.class);
         applicationContext.registerBean(SimpleHelloService.class);
-        applicationContext.refresh();
+        applicationContext.refresh(); // spring container 의 초기화
 
-        // ServletContainer 를 코드롤 등록하면서 servlet 을 실행한다.
+        // (2) ServletContainer 를 코드롤 등록하면서 servlet 을 실행한다.
         ServletWebServerFactory tomcatServletWebServerFactory = new TomcatServletWebServerFactory();
         WebServer webServer = tomcatServletWebServerFactory.getWebServer(servletContext -> {
             servletContext.addServlet("dispatcherServlet",
@@ -134,4 +135,75 @@ public class PrincipleApplication {
 }
 ```
 - 전체적으로 코드가 간결해졌다.
-- (1) 스프링 컨테이너 생성과 스프링 빈을 등록, (2) ServletContainer 를 등록하고 servlet 을 실행한다.  
+- (1) 스프링 컨테이너 생성과 스프링 빈을 등록, (2) ServletContainer 를 등록하고 servlet 을 실행한다.
+
+### 자바 코드로 구성 정보 사용
+- 팩토리 메서드를 만들어서 직접 Bean instance 를 생성하는 방법
+```java
+@Configuration
+public class PrincipleApplication {
+
+    @Bean
+    public HelloController helloController(HelloService helloService) {
+        return new HelloController(helloService);
+    }
+
+    @Bean
+    public HelloService helloService() {
+        return new SimpleHelloService();
+    }
+
+    public static void main(String[] args) {
+
+        // java code 로 만든 configuration 을 읽을 수 있도록 AnnotationConfigWebApplicationContext 선언
+        AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext() {
+            @Override
+            protected void onRefresh() {
+                super.onRefresh();
+                // servlet container 를 초기화하는 코드를 여기로 옮긴다. -> spring container 가 실행될 때 서블릿 컨테이너도 내재화 하여 같이 실행되게 함
+                ServletWebServerFactory tomcatServletWebServerFactory = new TomcatServletWebServerFactory();
+                WebServer webServer = tomcatServletWebServerFactory.getWebServer(servletContext -> {
+                    servletContext.addServlet("dispatcherServlet",
+                            new DispatcherServlet(this))
+                        .addMapping("/*");
+                });
+                webServer.start();
+            }
+        };
+        
+        // java code 로 된 구성정보를 가진 클래스를 등록해줘야 한다.
+        applicationContext.register(PrincipleApplication.class);
+        applicationContext.refresh();
+    }
+}
+```
+
+
+### @ComponentScan 으로 빈 구성 찾기
+- 위에서 자바 코드로 등록한 빈 대신 @Component 어노테이션이 붙은 클래스를 모두 찾아 빈으로 등록한다.
+- @ComponentScan 어노테이션 덕분에 @Component 가 붙은 모든 클래스를 찾을 수 있다.
+- 아래 코드는 스프링 컨테이너가 실행될 때 서블릿 컨테이너도 같이 실행되는 형태
+```java
+@Configuration
+@ComponentScan
+public class PrincipleApplication {
+    public static void main(String[] args) {
+        AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext() {
+            @Override
+            protected void onRefresh() {
+                super.onRefresh();
+                ServletWebServerFactory tomcatServletWebServerFactory = new TomcatServletWebServerFactory();
+                WebServer webServer = tomcatServletWebServerFactory.getWebServer(servletContext -> {
+                    servletContext.addServlet("dispatcherServlet",
+                            new DispatcherServlet(this))
+                        .addMapping("/*");
+                });
+                webServer.start();
+            }
+        };
+
+        applicationContext.register(PrincipleApplication.class);
+        applicationContext.refresh();
+    }
+}
+```
