@@ -207,3 +207,32 @@ public class PrincipleApplication {
     }
 }
 ```
+
+
+```java
+@ComponentScan
+public class PrincipleApplication {
+    public static void main(String[] args) {
+        AnnotationConfigWebApplicationContext applicationContext = new AnnotationConfigWebApplicationContext() {
+            @Override
+            protected void onRefresh() {
+                super.onRefresh();
+
+                // 아래 두 오브젝트는 애플리케이션의 기능을 담당하는 것은 아니지만, 이 둘이 없다면 스프링이 시작할 수가 없다.
+                // 이 오브젝트들도 스프링 빈으로 만들어서 관리해보자.
+                ServletWebServerFactory tomcatServletWebServerFactory = new TomcatServletWebServerFactory();
+                WebServer webServer = tomcatServletWebServerFactory.getWebServer(servletContext -> {
+                    servletContext.addServlet("dispatcherServlet",
+                            new DispatcherServlet(this))
+                        .addMapping("/*");
+                });
+                webServer.start();
+            }
+        };
+
+        applicationContext.register(PrincipleApplication.class);
+        applicationContext.refresh();
+    }
+}
+
+```
