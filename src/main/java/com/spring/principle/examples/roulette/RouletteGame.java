@@ -80,8 +80,8 @@ public class RouletteGame {
             .stream()
             .map(Roulette::getProbability)
             .reduce(BigDecimal.ZERO, BigDecimal::add);
-        int i = 6 - this.soldOuts.size();
-        return divide.divide(BigDecimal.valueOf(i), 2, BigDecimal.ROUND_CEILING);
+        int availableSize = rouletteList.size() - this.soldOuts.size();
+        return divide.divide(BigDecimal.valueOf(availableSize), 2, BigDecimal.ROUND_CEILING);
     }
 
     @Deprecated
