@@ -15,14 +15,17 @@ class RouletteTest {
         List<Roulette> initialRoulette = List.of(
             new Roulette(10, BigDecimal.valueOf(0.5), 40),
             new Roulette(50, BigDecimal.valueOf(0.3), 30),
-            new Roulette(100, BigDecimal.valueOf(0.2), 16),
+            new Roulette(100, BigDecimal.valueOf(0.1), 16),
             new Roulette(500, BigDecimal.valueOf(0.05), 8),
             new Roulette(800, BigDecimal.valueOf(0.03), 4),
             new Roulette(1000, BigDecimal.valueOf(0.02), 2));
 
         RouletteGame rouletteGame = new RouletteGame(initialRoulette);
         for (int i = 0; i < 100; i++) {
-            rouletteGame.play();
+            Roulette play = rouletteGame.play();
+            if (play.getStocks() == 0) {
+                System.out.println(i + "번째 play: " + play.getScore() + "점 아이템 소진");
+            }
         }
 
         List<Roulette> rouletteList = rouletteGame.getRouletteList();
