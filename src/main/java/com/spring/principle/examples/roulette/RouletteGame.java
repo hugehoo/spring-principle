@@ -1,93 +1,95 @@
 package com.spring.principle.examples.roulette;
 
-import static java.util.stream.Collectors.*;
-
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.TreeMap;
-import java.util.function.Function;
+import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @Getter
 public class RouletteGame {
 
     private final List<Roulette> rouletteList;
 
-    private final Map<Integer, Roulette> soldOuts = new HashMap<>();
+    // private final Map<Integer, Roulette> soldOuts = new HashMap<>();
+    private final Map<Integer, Roulette> soldOuts = new ConcurrentHashMap<>();
 
+    private final Random random = new Random();
 
     public RouletteGame(List<Roulette> roulettes) {
         this.rouletteList = roulettes;
     }
 
     public Roulette play() {
-        Map<Integer, BigDecimal> probabilityMap = getProbabilityMap();
-        TreeMap<BigDecimal, Integer> rouletteMap = buildRouletteMap(probabilityMap);
-        Roulette roulette = getRouletteResult(rouletteMap);
+        checkPlayAvailable();
+        TreeMap<BigDecimal, Roulette> rouletteProbability = getRouletteProbability();
+        Roulette roulette = getResult(rouletteProbability);
         decreaseStock(roulette);
         return roulette;
     }
 
-    private void decreaseStock(Roulette roulette) {
-        roulette.decreaseStock();
-        if (roulette.getStocks() == 0) {
-            soldOuts.put(roulette.getScore(), roulette);
-        }
-    }
-
-    private Roulette getRouletteResult(TreeMap<BigDecimal, Integer> rouletteMap) {
-        BigDecimal randomValue = BigDecimal.valueOf(Math.random());
-        Integer value = rouletteMap.higherEntry(randomValue)
-            .getValue();
-
-        return this.rouletteList.stream()
-            .filter(d -> Objects.equals(d.getScore(), value))
-            .findFirst()
-            .orElse(null);
-    }
-
-    private TreeMap<BigDecimal, Integer> buildRouletteMap(Map<Integer, BigDecimal> probabilityMap) {
-        final TreeMap<BigDecimal, Integer> rouletteMap = new TreeMap<>();
+    private TreeMap<BigDecimal, Roulette> getRouletteProbability() {
+        BigDecimal remainProbability = getCurrentProbability();
         BigDecimal cumulativeProbability = BigDecimal.ZERO;
-
-        for (var entry : probabilityMap.entrySet()) {
-            cumulativeProbability = cumulativeProbability.add(entry.getValue());
-            rouletteMap.put(cumulativeProbability, entry.getKey());
+        TreeMap<BigDecimal, Roulette> probabilityMap = new TreeMap<>();
+        for (Roulette roulette : this.rouletteList) {
+            if (roulette.getStocks() != 0) {
+                BigDecimal updatedProbability = roulette.getProbability().add(remainProbability);
+                cumulativeProbability = cumulativeProbability.add(updatedProbability);
+                probabilityMap.put(cumulativeProbability, roulette);
+            }
         }
-
-        return rouletteMap;
-    }
-
-    public Map<Integer, BigDecimal> getProbabilityMap() {
-        BigDecimal remainProbability = getRemainProbability();
-        Map<Integer, BigDecimal> probabilityMap = new HashMap<>();
-        this.rouletteList.stream()
-            .filter(data -> data.getStocks() != 0)
-            .forEach(data -> {
-                BigDecimal probability = data.getProbability();
-                BigDecimal updatedProbability = probability.add(remainProbability);
-                probabilityMap.put(data.getScore(), updatedProbability);
-            });
         return probabilityMap;
     }
 
-    private BigDecimal getRemainProbability() {
-        BigDecimal divide = this.soldOuts.values()
-            .stream()
-            .map(Roulette::getProbability)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        int availableSize = rouletteList.size() - this.soldOuts.size();
-        return divide.divide(BigDecimal.valueOf(availableSize), 2, BigDecimal.ROUND_CEILING);
+    private Roulette getResult(TreeMap<BigDecimal, Roulette> rouletteMap) {
+        BigDecimal randomValue = BigDecimal.valueOf(random.nextDouble());
+        return rouletteMap.higherEntry(randomValue)
+            .getValue();
     }
 
-    @Deprecated
-    public Map<Integer, Roulette> getSoldOuts() {
-        return this.rouletteList.stream()
-            .filter(data -> data.getStocks() == 0)
-            .collect(toMap(Roulette::getScore, Function.identity(), (o1, o2) -> o1));
+    private void decreaseStock(Roulette roulette) {
+        synchronized (soldOuts) {
+            roulette.decreaseStock();
+            if (roulette.getStocks() == 0) {
+                soldOuts.put(roulette.getScore(), roulette);
+            }
+        }
     }
+
+    private BigDecimal getCurrentProbability() {
+        synchronized (soldOuts) {
+            BigDecimal sumSoldOutProbability = this.soldOuts.values()
+                .stream()
+                .map(Roulette::getProbability)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            int availableSize = rouletteList.size() - this.soldOuts.size();
+            return sumSoldOutProbability.divide(BigDecimal.valueOf(availableSize), 3, RoundingMode.HALF_UP);
+        }
+    }
+
+    public Integer getCurrentTotalStock() {
+        return this.rouletteList
+            .stream()
+            .map(Roulette::getStocks)
+            .reduce(0, Integer::sum);
+    }
+
+    private void checkPlayAvailable() {
+        synchronized (soldOuts) {
+            boolean equals = Objects.equals(this.rouletteList.size(), this.soldOuts.size());
+            if (equals) {
+                throw new IllegalStateException();
+            }
+        }
+    }
+
 }
