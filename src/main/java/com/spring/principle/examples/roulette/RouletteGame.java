@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Random;
 import java.util.TreeMap;
 
 import lombok.Getter;
@@ -18,6 +19,8 @@ public class RouletteGame {
     private final List<Roulette> rouletteList;
 
     private final Map<Integer, Roulette> soldOuts = new HashMap<>();
+
+    private final Random random = new Random();
 
     public RouletteGame(List<Roulette> roulettes) {
         this.rouletteList = roulettes;
@@ -46,7 +49,7 @@ public class RouletteGame {
     }
 
     private Roulette getResult(TreeMap<BigDecimal, Roulette> rouletteMap) {
-        BigDecimal randomValue = BigDecimal.valueOf(Math.random());
+        BigDecimal randomValue = BigDecimal.valueOf(random.nextDouble());
         return rouletteMap.higherEntry(randomValue)
             .getValue();
     }
