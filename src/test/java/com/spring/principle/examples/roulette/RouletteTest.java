@@ -1,7 +1,12 @@
 package com.spring.principle.examples.roulette;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
@@ -68,5 +73,28 @@ class RouletteTest {
             rouletteGame.play();
         }
         Assertions.assertThatThrownBy(rouletteGame::play);
+    }
+
+    @Test
+    @DisplayName("동시성 테스트")
+    void multiThreadTest() throws InterruptedException, ExecutionException {
+        List<Roulette> initialRoulette = 룰렛_초기화();
+        final int INITIAL_STOCK = initialRoulette.stream()
+            .mapToInt(Roulette::getStocks)
+            .sum();
+
+        RouletteGame rouletteGame = new RouletteGame(initialRoulette);
+
+        int numThreads = 5;
+        ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
+        List<Future<Roulette>> futures = new ArrayList<>();
+        for (int i = 0; i < numThreads; i++) {
+            Future<Roulette> future = executorService.submit(rouletteGame::play);
+            future.get();
+        }
+        executorService.shutdown();
+
+        Assertions.assertThat(INITIAL_STOCK - numThreads)
+            .isEqualTo(rouletteGame.getCurrentTotalStock());
     }
 }
