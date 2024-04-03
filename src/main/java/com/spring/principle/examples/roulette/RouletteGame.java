@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.TreeMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
@@ -18,7 +19,8 @@ public class RouletteGame {
 
     private final List<Roulette> rouletteList;
 
-    private final Map<Integer, Roulette> soldOuts = new HashMap<>();
+    // private final Map<Integer, Roulette> soldOuts = new HashMap<>();
+    private final Map<Integer, Roulette> soldOuts = new ConcurrentHashMap<>();
 
     private final Random random = new Random();
 
@@ -62,12 +64,14 @@ public class RouletteGame {
     }
 
     private BigDecimal getCurrentProbability() {
-        BigDecimal sumSoldOutProbability = this.soldOuts.values()
-            .stream()
-            .map(Roulette::getProbability)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        int availableSize = rouletteList.size() - this.soldOuts.size();
-        return sumSoldOutProbability.divide(BigDecimal.valueOf(availableSize), 3, RoundingMode.HALF_UP);
+        synchronized (soldOuts) {
+            BigDecimal sumSoldOutProbability = this.soldOuts.values()
+                .stream()
+                .map(Roulette::getProbability)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            int availableSize = rouletteList.size() - this.soldOuts.size();
+            return sumSoldOutProbability.divide(BigDecimal.valueOf(availableSize), 3, RoundingMode.HALF_UP);
+        }
     }
 
     public Integer getCurrentTotalStock() {
@@ -78,9 +82,11 @@ public class RouletteGame {
     }
 
     private void checkPlayAvailable() {
-        boolean equals = Objects.equals(this.rouletteList.size(), this.soldOuts.size());
-        if (equals) {
-            throw new IllegalStateException();
+        synchronized (soldOuts) {
+            boolean equals = Objects.equals(this.rouletteList.size(), this.soldOuts.size());
+            if (equals) {
+                throw new IllegalStateException();
+            }
         }
     }
 
