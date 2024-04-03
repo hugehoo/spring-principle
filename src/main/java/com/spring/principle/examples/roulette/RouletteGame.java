@@ -5,6 +5,7 @@ import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.TreeMap;
 
 import lombok.Getter;
@@ -18,12 +19,12 @@ public class RouletteGame {
 
     private final Map<Integer, Roulette> soldOuts = new HashMap<>();
 
-
     public RouletteGame(List<Roulette> roulettes) {
         this.rouletteList = roulettes;
     }
 
     public Roulette play() {
+        checkPlayAvailable();
         TreeMap<BigDecimal, Roulette> rouletteProbability = getRouletteProbability();
         Roulette roulette = getResult(rouletteProbability);
         decreaseStock(roulette);
@@ -64,6 +65,20 @@ public class RouletteGame {
             .reduce(BigDecimal.ZERO, BigDecimal::add);
         int availableSize = rouletteList.size() - this.soldOuts.size();
         return sumSoldOutProbability.divide(BigDecimal.valueOf(availableSize), 3, RoundingMode.HALF_UP);
+    }
+
+    public Integer getCurrentTotalStock() {
+        return this.rouletteList
+            .stream()
+            .map(Roulette::getStocks)
+            .reduce(0, Integer::sum);
+    }
+
+    private void checkPlayAvailable() {
+        boolean equals = Objects.equals(this.rouletteList.size(), this.soldOuts.size());
+        if (equals) {
+            throw new IllegalStateException();
+        }
     }
 
 }
