@@ -57,9 +57,11 @@ public class RouletteGame {
     }
 
     private void decreaseStock(Roulette roulette) {
-        roulette.decreaseStock();
-        if (roulette.getStocks() == 0) {
-            soldOuts.put(roulette.getScore(), roulette);
+        synchronized (soldOuts) {
+            roulette.decreaseStock();
+            if (roulette.getStocks() == 0) {
+                soldOuts.put(roulette.getScore(), roulette);
+            }
         }
     }
 

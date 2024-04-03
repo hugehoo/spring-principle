@@ -76,7 +76,7 @@ class RouletteTest {
     }
 
     @Test
-    @DisplayName("동시성 테스트")
+    @DisplayName("스레드 30개 동시성 테스트 - Future")
     void multiThreadTest() throws InterruptedException, ExecutionException {
         List<Roulette> initialRoulette = 룰렛_초기화();
         final int INITIAL_STOCK = initialRoulette.stream()
@@ -85,7 +85,7 @@ class RouletteTest {
 
         RouletteGame rouletteGame = new RouletteGame(initialRoulette);
 
-        int numThreads = 5;
+        int numThreads = 30;
         ExecutorService executorService = Executors.newFixedThreadPool(numThreads);
         List<Future<Roulette>> futures = new ArrayList<>();
         for (int i = 0; i < numThreads; i++) {
@@ -96,5 +96,27 @@ class RouletteTest {
 
         Assertions.assertThat(INITIAL_STOCK - numThreads)
             .isEqualTo(rouletteGame.getCurrentTotalStock());
+    }
+
+    @Test
+    @DisplayName("스레드 30개 동시성 테스트 - Thread")
+    void multiThreadTestV2() throws InterruptedException {
+        List<Roulette> initialRoulette = 룰렛_초기화();
+        RouletteGame rouletteGame = new RouletteGame(initialRoulette);
+
+        int numThreads = 30;
+        List<Thread> threads = new ArrayList<>();
+
+        for (int i = 0; i < numThreads; i++) {
+            Thread thread = new Thread(rouletteGame::play);
+            threads.add(thread);
+            thread.start();
+        }
+
+        for (Thread thread : threads) {
+            thread.join();
+        }
+
+        Assertions.assertThat(100 - numThreads).isEqualTo(rouletteGame.getCurrentTotalStock());
     }
 }
