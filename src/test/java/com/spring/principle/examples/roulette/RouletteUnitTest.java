@@ -12,7 +12,7 @@ import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
-class RouletteTest {
+class RouletteUnitTest {
 
     final int INITIAL_STOCK = 100;
 
@@ -53,12 +53,12 @@ class RouletteTest {
         List<Roulette> initialRoulette = 룰렛_초기화();
 
         RouletteGame rouletteGame = new RouletteGame(initialRoulette);
-        Integer totalStock = rouletteGame.getCurrentTotalStock();
+        Integer totalStock = rouletteGame.currentTotalStock();
 
         Assertions.assertThat(totalStock).isEqualTo(INITIAL_STOCK);
         for (int i = 1; i <= INITIAL_STOCK; i++) {
             rouletteGame.play();
-            Integer currentStock = rouletteGame.getCurrentTotalStock();
+            Integer currentStock = rouletteGame.currentTotalStock();
             Assertions.assertThat(currentStock).isEqualTo(INITIAL_STOCK - i);
         }
     }
@@ -95,7 +95,7 @@ class RouletteTest {
         executorService.shutdown();
 
         Assertions.assertThat(INITIAL_STOCK - numThreads)
-            .isEqualTo(rouletteGame.getCurrentTotalStock());
+            .isEqualTo(rouletteGame.currentTotalStock());
     }
 
     @Test
@@ -117,6 +117,6 @@ class RouletteTest {
             thread.join();
         }
 
-        Assertions.assertThat(100 - numThreads).isEqualTo(rouletteGame.getCurrentTotalStock());
+        Assertions.assertThat(100 - numThreads).isEqualTo(rouletteGame.currentTotalStock());
     }
 }
