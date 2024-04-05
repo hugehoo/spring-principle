@@ -26,12 +26,10 @@ class RouletteGame(val rouletteList: List<Roulette>) {
 
         this.rouletteList
             .filter { r -> r.stocks != 0 }
-            .forEach {r ->
-                run {
-                    val add = r.probability!!.add(remainProbability)
-                    cumulativeProbability = cumulativeProbability.add(add)
-                    probabilityMap.put(cumulativeProbability, r)
-                }
+            .forEach { r ->
+                val add = r.probability!!.add(remainProbability)
+                cumulativeProbability = cumulativeProbability.add(add)
+                probabilityMap[cumulativeProbability] = r
             }
         return probabilityMap
     }
@@ -73,7 +71,7 @@ class RouletteGame(val rouletteList: List<Roulette>) {
     fun currentTotalStock(): Int {
         return this.rouletteList
             .stream()
-            .map<Int>(Function<Roulette, Int> {obj: Roulette -> obj.stocks})
+            .map<Int>(Function<Roulette, Int> { obj: Roulette -> obj.stocks })
             .reduce(0) { a: Int, b: Int -> Integer.sum(a, b) }
     }
 
