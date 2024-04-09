@@ -1,3 +1,5 @@
+@file:Suppress("NonAsciiCharacters")
+
 package com.spring.principle.examples.roulette
 
 import org.assertj.core.api.Assertions
@@ -6,18 +8,18 @@ import org.junit.jupiter.api.Test
 import java.math.BigDecimal
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
-import java.util.concurrent.Future
+import java.util.concurrent.atomic.AtomicInteger
 
 internal class RouletteUnitTest {
-    val INITIAL_STOCK = 100
+    private val initialStock = 100
     private fun 룰렛_초기화(): List<Roulette> {
-        return java.util.List.of(
-            Roulette(10, BigDecimal.valueOf(0.5), 40),
-            Roulette(50, BigDecimal.valueOf(0.3), 30),
-            Roulette(100, BigDecimal.valueOf(0.1), 16),
-            Roulette(500, BigDecimal.valueOf(0.05), 8),
-            Roulette(800, BigDecimal.valueOf(0.03), 4),
-            Roulette(1000, BigDecimal.valueOf(0.02), 2)
+        return listOf(
+            Roulette(10, BigDecimal.valueOf(0.5), AtomicInteger(40)),
+            Roulette(50, BigDecimal.valueOf(0.3), AtomicInteger(30)),
+            Roulette(100, BigDecimal.valueOf(0.1), AtomicInteger(16)),
+            Roulette(500, BigDecimal.valueOf(0.05), AtomicInteger(8)),
+            Roulette(800, BigDecimal.valueOf(0.03), AtomicInteger(4)),
+            Roulette(1000, BigDecimal.valueOf(0.02), AtomicInteger(2))
         )
     }
 
@@ -26,15 +28,15 @@ internal class RouletteUnitTest {
     fun playTest() {
         val initialRoulette = 룰렛_초기화()
         val rouletteGame = RouletteGame(initialRoulette)
-        for (i in 0 until INITIAL_STOCK) {
+        for (i in 0 until initialStock) {
             val play = rouletteGame.play()
-            if (play.stocks == 0) {
+            if (play.stocks.get() == 0) {
                 println(i.toString() + "번째 play: " + play.score + "점 아이템 소진")
             }
         }
         val rouletteList = rouletteGame.rouletteList
         for (roulette in rouletteList) {
-            Assertions.assertThat(roulette.stocks).isEqualTo(0)
+            Assertions.assertThat(roulette.stocks.get()).isEqualTo(0)
         }
     }
 
@@ -44,11 +46,11 @@ internal class RouletteUnitTest {
         val initialRoulette = 룰렛_초기화()
         val rouletteGame = RouletteGame(initialRoulette)
         val totalStock = rouletteGame.currentTotalStock()
-        Assertions.assertThat(totalStock).isEqualTo(INITIAL_STOCK)
-        for (i in 1..INITIAL_STOCK) {
+        Assertions.assertThat(totalStock).isEqualTo(initialStock)
+        for (i in 1..initialStock) {
             rouletteGame.play()
             val currentStock = rouletteGame.currentTotalStock()
-            Assertions.assertThat(currentStock).isEqualTo(INITIAL_STOCK - i)
+            Assertions.assertThat(currentStock).isEqualTo(initialStock - i)
         }
     }
 
@@ -71,19 +73,18 @@ internal class RouletteUnitTest {
     )
     fun multiThreadTest() {
         val initialRoulette = 룰렛_초기화()
-        val INITIAL_STOCK = initialRoulette.stream()
-            .mapToInt { r -> r.stocks!! }
+        val initialStock = initialRoulette.stream()
+            .mapToInt { r -> r.stocks.get() }
             .sum()
         val rouletteGame = RouletteGame(initialRoulette)
         val numThreads = 30
         val executorService = Executors.newFixedThreadPool(numThreads)
-        val futures: List<Future<Roulette>> = ArrayList()
         for (i in 0 until numThreads) {
             val future = executorService.submit<Roulette> { rouletteGame.play() }
             future.get()
         }
         executorService.shutdown()
-        Assertions.assertThat(INITIAL_STOCK - numThreads)
+        Assertions.assertThat(initialStock - numThreads)
             .isEqualTo(rouletteGame.currentTotalStock())
     }
 

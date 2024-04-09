@@ -4,12 +4,11 @@ import java.math.BigDecimal
 import java.math.RoundingMode
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
-import java.util.function.Function
 
 class RouletteGame(val rouletteList: List<Roulette>) {
 
     private val soldOuts = ConcurrentHashMap<Int, Roulette>()
-    private val random = java.util.Random()
+    private val random = Random()
 
     fun play(): Roulette {
         checkPlayAvailable()
@@ -25,9 +24,9 @@ class RouletteGame(val rouletteList: List<Roulette>) {
         val probabilityMap = TreeMap<BigDecimal, Roulette>()
 
         this.rouletteList
-            .filter { r -> r.stocks != 0 }
+            .filter { r -> r.stocks.get() != 0 }
             .forEach { r ->
-                val add = r.probability!!.add(remainProbability)
+                val add = r.probability.add(remainProbability)
                 cumulativeProbability = cumulativeProbability.add(add)
                 probabilityMap[cumulativeProbability] = r
             }
@@ -41,27 +40,15 @@ class RouletteGame(val rouletteList: List<Roulette>) {
 
     private fun decreaseStock(roulette: Roulette) {
         roulette.decreaseStock()
-        if (roulette.stocks == 0) {
+        if (roulette.stocks.get() == 0) {
             soldOuts[roulette.score] = roulette
-        }
-    }
-
-    private fun getCurrentProbability1(): BigDecimal? {
-        synchronized(soldOuts) {
-            val sumSoldOutProbability = soldOuts.values
-                .stream()
-                .map<BigDecimal>(Function<Roulette, BigDecimal> { obj: Roulette -> obj.probability })
-                .reduce(BigDecimal.ZERO)
-                { obj: BigDecimal, agent: BigDecimal? -> obj.add(agent) }
-            val availableSize = rouletteList.size - soldOuts.size
-            return sumSoldOutProbability.divide(BigDecimal.valueOf(availableSize.toLong()), 3, RoundingMode.HALF_UP)
         }
     }
 
     private fun getCurrentProbability(): BigDecimal? {
         val sumSoldOutProbability = soldOuts.values
             .stream()
-            .map<BigDecimal> { obj: Roulette -> obj.probability }
+            .map { obj: Roulette -> obj.probability }
             .reduce(BigDecimal.ZERO)
             { obj: BigDecimal, agent: BigDecimal? -> obj.add(agent) }
         val availableSize = rouletteList.size - soldOuts.size
@@ -71,7 +58,7 @@ class RouletteGame(val rouletteList: List<Roulette>) {
     fun currentTotalStock(): Int {
         return this.rouletteList
             .stream()
-            .map<Int>(Function<Roulette, Int> { obj: Roulette -> obj.stocks })
+            .map { obj: Roulette -> obj.stocks.get() }
             .reduce(0) { a: Int, b: Int -> Integer.sum(a, b) }
     }
 

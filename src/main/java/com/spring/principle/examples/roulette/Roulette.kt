@@ -1,15 +1,14 @@
 package com.spring.principle.examples.roulette
 
 import java.math.BigDecimal
+import java.util.concurrent.atomic.AtomicInteger
 
 
-class Roulette(arg1: Int, valueOf: BigDecimal, arg3: Int) {
-    val score: Int = arg1
-    val probability: BigDecimal? = valueOf
-    var stocks: Int? = arg3
+class Roulette(val score: Int, valueOf: BigDecimal, var stocks: AtomicInteger) {
+    val probability: BigDecimal = valueOf
     fun decreaseStock() {
-        if (stocks!! > 0) {
-            stocks = stocks!! - 1
+        if (stocks.get() > 0) {
+            stocks.set(stocks.get() - 1)
         }
     }
 }
