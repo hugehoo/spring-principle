@@ -5,12 +5,12 @@ import java.math.RoundingMode
 import java.util.*
 import java.util.concurrent.ConcurrentHashMap
 
-class RouletteGame(val rouletteList: List<Roulette>) {
+class RouletteGame(val sectorList: List<Sector>) {
 
-    private val soldOuts = ConcurrentHashMap<Int, Roulette>()
+    private val soldOuts = ConcurrentHashMap<Int, Sector>()
     private val random = Random()
 
-    fun play(): Roulette {
+    fun play(): Sector {
         checkPlayAvailable()
         val rouletteProbability = getRouletteProbability()
         val roulette = getResult(rouletteProbability)
@@ -18,12 +18,12 @@ class RouletteGame(val rouletteList: List<Roulette>) {
         return roulette
     }
 
-    private fun getRouletteProbability(): TreeMap<BigDecimal, Roulette> {
+    private fun getRouletteProbability(): TreeMap<BigDecimal, Sector> {
         val remainProbability = getCurrentProbability()
         var cumulativeProbability = BigDecimal.ZERO
-        val probabilityMap = TreeMap<BigDecimal, Roulette>()
+        val probabilityMap = TreeMap<BigDecimal, Sector>()
 
-        this.rouletteList
+        this.sectorList
             .filter { r -> r.stocks.get() != 0 }
             .forEach { r ->
                 val add = r.probability.add(remainProbability)
@@ -33,37 +33,37 @@ class RouletteGame(val rouletteList: List<Roulette>) {
         return probabilityMap
     }
 
-    private fun getResult(rouletteMap: TreeMap<BigDecimal, Roulette>): Roulette {
+    private fun getResult(sectorMap: TreeMap<BigDecimal, Sector>): Sector {
         val randomValue = BigDecimal.valueOf(random.nextDouble())
-        return rouletteMap.higherEntry(randomValue).value
+        return sectorMap.higherEntry(randomValue).value
     }
 
-    private fun decreaseStock(roulette: Roulette) {
-        roulette.decreaseStock()
-        if (roulette.stocks.get() == 0) {
-            soldOuts[roulette.score] = roulette
+    private fun decreaseStock(sector: Sector) {
+        sector.decreaseStock()
+        if (sector.stocks.get() == 0) {
+            soldOuts[sector.score] = sector
         }
     }
 
     private fun getCurrentProbability(): BigDecimal? {
         val sumSoldOutProbability = soldOuts.values
             .stream()
-            .map { obj: Roulette -> obj.probability }
+            .map { obj: Sector -> obj.probability }
             .reduce(BigDecimal.ZERO)
             { obj: BigDecimal, agent: BigDecimal? -> obj.add(agent) }
-        val availableSize = rouletteList.size - soldOuts.size
+        val availableSize = sectorList.size - soldOuts.size
         return sumSoldOutProbability.divide(BigDecimal.valueOf(availableSize.toLong()), 3, RoundingMode.HALF_UP)
     }
 
     fun currentTotalStock(): Int {
-        return this.rouletteList
+        return this.sectorList
             .stream()
-            .map { obj: Roulette -> obj.stocks.get() }
+            .map { obj: Sector -> obj.stocks.get() }
             .reduce(0) { a: Int, b: Int -> Integer.sum(a, b) }
     }
 
     private fun checkPlayAvailable() {
-        if (this.rouletteList.size == this.soldOuts.size) {
+        if (this.sectorList.size == this.soldOuts.size) {
             throw IllegalStateException()
         }
     }
