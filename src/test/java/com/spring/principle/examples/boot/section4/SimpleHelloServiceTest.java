@@ -18,4 +18,11 @@ class SimpleHelloServiceTest {
         // 그저 자바 코드를 실행하는 것이기 때문에 별도의 Httpie 를 요청할 필요도 없다.
     }
 
+    @Test
+    void helloDecorator() {
+        HelloDecorator helloDecorator = new HelloDecorator(name -> name);
+        String ret = helloDecorator.sayHello("TEST");
+        Assertions.assertThat(ret).isEqualTo("**TEST**");
+    }
+
 }
