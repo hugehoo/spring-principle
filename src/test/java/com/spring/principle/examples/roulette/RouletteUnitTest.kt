@@ -6,20 +6,22 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
 
+
 internal class RouletteUnitTest {
     private val initialStock = 100
-    private fun 룰렛_초기화(): List<Roulette> {
+    private fun 룰렛_초기화(): List<Sector> {
         return listOf(
-            Roulette(10, BigDecimal.valueOf(0.5), AtomicInteger(40)),
-            Roulette(50, BigDecimal.valueOf(0.3), AtomicInteger(30)),
-            Roulette(100, BigDecimal.valueOf(0.1), AtomicInteger(16)),
-            Roulette(500, BigDecimal.valueOf(0.05), AtomicInteger(8)),
-            Roulette(800, BigDecimal.valueOf(0.03), AtomicInteger(4)),
-            Roulette(1000, BigDecimal.valueOf(0.02), AtomicInteger(2))
+            Sector(10, BigDecimal.valueOf(0.5), AtomicInteger(40)),
+            Sector(50, BigDecimal.valueOf(0.3), AtomicInteger(30)),
+            Sector(100, BigDecimal.valueOf(0.1), AtomicInteger(16)),
+            Sector(500, BigDecimal.valueOf(0.05), AtomicInteger(8)),
+            Sector(800, BigDecimal.valueOf(0.03), AtomicInteger(4)),
+            Sector(1000, BigDecimal.valueOf(0.02), AtomicInteger(2))
         )
     }
 
@@ -34,7 +36,7 @@ internal class RouletteUnitTest {
                 println(i.toString() + "번째 play: " + play.score + "점 아이템 소진")
             }
         }
-        val rouletteList = rouletteGame.rouletteList
+        val rouletteList = rouletteGame.sectorList
         for (roulette in rouletteList) {
             Assertions.assertThat(roulette.stocks.get()).isEqualTo(0)
         }
@@ -80,7 +82,7 @@ internal class RouletteUnitTest {
         val numThreads = 30
         val executorService = Executors.newFixedThreadPool(numThreads)
         for (i in 0 until numThreads) {
-            val future = executorService.submit<Roulette> { rouletteGame.play() }
+            val future = executorService.submit<Sector> { rouletteGame.play() }
             future.get()
         }
         executorService.shutdown()
@@ -107,5 +109,26 @@ internal class RouletteUnitTest {
             thread.join()
         }
         Assertions.assertThat(100 - numThreads).isEqualTo(rouletteGame.currentTotalStock())
+    }
+
+    @Test
+    fun sample() {
+        val treeMap = TreeMap<Int, String>()
+
+        treeMap[1] = "One"
+        treeMap[2] = "Two"
+        treeMap[4] = "Four"
+        treeMap[6] = "Six"
+
+        var higherEntry = treeMap.higherEntry(2)
+        println("Next higher entry after key 2: " + higherEntry!!.value) // 출력: "Next higher entry after key 2: Four"
+
+
+        higherEntry = treeMap.higherEntry(5)
+        if (higherEntry != null) {
+            println("Next higher entry after key 5: " + higherEntry.value)
+        } else {
+            println("No higher entry found after key 5")
+        }
     }
 }
