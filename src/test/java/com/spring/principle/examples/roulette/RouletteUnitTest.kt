@@ -6,9 +6,11 @@ import org.assertj.core.api.Assertions
 import org.junit.jupiter.api.DisplayName
 import org.junit.jupiter.api.Test
 import java.math.BigDecimal
+import java.util.*
 import java.util.concurrent.ExecutionException
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicInteger
+
 
 internal class RouletteUnitTest {
     private val initialStock = 100
@@ -107,5 +109,26 @@ internal class RouletteUnitTest {
             thread.join()
         }
         Assertions.assertThat(100 - numThreads).isEqualTo(rouletteGame.currentTotalStock())
+    }
+
+    @Test
+    fun sample() {
+        val treeMap = TreeMap<Int, String>()
+
+        treeMap[1] = "One"
+        treeMap[2] = "Two"
+        treeMap[4] = "Four"
+        treeMap[6] = "Six"
+
+        var higherEntry = treeMap.higherEntry(2)
+        println("Next higher entry after key 2: " + higherEntry!!.value) // 출력: "Next higher entry after key 2: Four"
+
+
+        higherEntry = treeMap.higherEntry(5)
+        if (higherEntry != null) {
+            println("Next higher entry after key 5: " + higherEntry.value)
+        } else {
+            println("No higher entry found after key 5")
+        }
     }
 }
