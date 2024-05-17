@@ -2,12 +2,31 @@ package com.spring.principle.examples.boot.section4;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
+
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.METHOD})
+@UnitTest
+@interface FastTest {
+
+}
+
+@Retention(RetentionPolicy.RUNTIME)
+@Target({ElementType.ANNOTATION_TYPE, ElementType.METHOD})
+@Test
+@interface UnitTest {
+}
+
 class SimpleHelloServiceTest {
 
-    @Test
+    @UnitTest
     void simpleHelloService() {
         SimpleHelloService service = new SimpleHelloService();
         String ret = service.sayHello("Test");
